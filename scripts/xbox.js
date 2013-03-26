@@ -1,5 +1,11 @@
 ﻿//The xbox object will contain everything we need for dealing with the backend
 var xbox = {
+	//URL for Games controller
+	gamesUrl: "games.php",
+	
+	//URL for User controller
+	userUrl: "user.php",
+	
     //Voter Eligibility
     canVote: true,
 
@@ -16,14 +22,14 @@ var xbox = {
 
         //Resets the user's vote for the day
         resetVote: function(cb) {
-            cbfun = function() { xbox.checkVote(cb); };
-            $.get('User/Reset', {}, cbfun);
+            cbFunc = function() { xbox.checkVote(cb); };
+            $.post(xbox.userUrl, { action: 'reset' }, cbFunc);
         }
     },
 
     //Get eligibility from server, set canVote, call callBack
     checkVote: function(callBack) {
-        $.get("User/IsEligible", {}, function (data) {
+        $.post(xbox.userUrl, { action: 'isEligible' }, function (data) {
             xbox.canVote = data.eligible;
             if (typeof callBack == 'function')
 			{
@@ -39,17 +45,17 @@ var xbox = {
 
     //Get All gams from server and render
     getAll: function () {
-        $.get("Games", {}, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.gamesUrl, { action: 'getAll' }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Retrieve filtered list of games from server and render
     getFind: function (p,v) {
-        $.get("Games/Find/"+p+"/"+v, {}, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.gamesUrl, { action: 'find', param: p, val: v }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Adds vote for a game
     addVote: function (id) {
-        $.get("Games/Vote/" + id, {}, function (data) {
+        $.post(xbox.gamesUrl, { action: 'vote', id: id }, function (data) {
             xbox.json = data;
             //Resets vote if unlimited votes enabled
             if (xbox.dev.unlVotes)
@@ -67,7 +73,7 @@ var xbox = {
 
     //Mark game as purchased
     purchase: function (id) {
-        $.get("Games/Purchase/" + id, {}, function (data) {
+        $.post(xbox.gamesUrl, { action: 'purchase', id: id}, function (data) {
             xbox.json = data;
             //Display "Purchased" text
             $(".game[data-id='game" + id + "']").removeClass('wantit').addClass('gotit');
@@ -85,7 +91,7 @@ var xbox = {
     //Clears all games
     clearGames: function () {
         //NOTE: I would generally create a confirmation dialog, but didn't due to time constraints
-        $.get("Games/ClearAll", {}, function (data) {
+        $.post(xbox.gamesUrl, { action: 'clearAll' }, function (data) {
             xbox.games = data.games;
             xbox.renderGames();
         });
@@ -265,7 +271,7 @@ var xbox = {
             return false;
         }
         //Send add request to server
-        $.get("Games/Add/" + tx, {}, function (data) {
+        $.post(xbox.gamesUrl, { action: 'addUrl', title: tx }, function (data) {
             xbox.json = data;
             //If error exists, return error
             if (data.error)
