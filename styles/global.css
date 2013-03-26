@@ -1,0 +1,241 @@
+﻿body
+{
+    font-size: .85em;
+    font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
+    color: #232323;
+    background-color: #fff;
+}
+
+header, footer, nav, section {
+    display: block;
+}
+
+/*
+Override jqueryui defaults    
+*/
+.ui-button, .ui-button .ui-button-text, .ui-menu-item, .ui-accordion, .avote *
+{
+    line-height: normal !important;
+    font-size: 11px !important;
+}
+
+/* Layout */
+body
+{
+    background-color: #AAAAAA;
+}
+.main
+{
+    max-width: 725px;
+    box-shadow: 3px 3px 8px #888888;
+    margin: auto;
+    margin-top: 10px;
+    padding: 25px;
+    background-color: #FFFFFF;
+}
+
+.header
+{
+    border-bottom: 1px solid #CCCCCC;
+    padding-left: 15px;
+}
+
+.content
+{
+    min-height: 600px;
+    overflow: hidden;
+}
+
+.footer
+{
+    color: #CCCCCC;
+}
+
+/* Index */
+.radios, #dvSearch, #dvSett, #dvXPurchase
+{
+    float: left;
+    margin: 15px 10px 0px 10px;
+    border: 0px solid #000;
+}
+#dvXPurchase
+{
+    clear: left;
+    display: none;
+}
+#dvSett
+{
+    float: right;
+}
+#mnuSett
+{
+    position: absolute;
+    z-index: 1;
+    display: none;
+}
+.dis-override
+{
+    opacity: 1.0 !important;
+    border-bottom: 
+}
+.dis-override *
+{
+    font-weight: bold !important;
+    text-decoration: underline !important;
+}
+
+
+#dvMenu
+{
+    width: 100%;
+    min-height: 50px;
+    overflow: hidden;
+    padding-bottom: 15px;
+}
+
+/* Games */
+#dvGames
+{
+    width: 100%;
+}
+.dvGhost
+{
+    display: none;
+}
+.game
+{
+    width: 150px;
+    height: 150px;
+    box-shadow: 3px 3px 10px #888888;
+    cursor: default;
+    padding: 5px;
+    display: inline-block;
+    float: left;
+    margin: 10px;
+    position: relative;
+}
+.game:hover
+{
+    box-shadow: 3px 3px 20px #888888;
+}
+.gameTitle h3
+{
+    text-align: center;
+    color: #444;
+}
+.gameVotes
+{
+    position: absolute;
+    bottom: 55px;
+    left: 0px;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: #888;
+    border: 0px solid  #000;
+}
+.gameVotes span
+{
+    font-size: 30px;
+}
+.gameVotes em
+{
+    color: #AAA;
+}
+.gameBtn
+{
+    position: absolute;
+    bottom: 15px;
+    height: 22px;
+    min-width: 50px;
+    left: 45px;
+    border: 0px solid  #000;
+}
+.avote, .apurchase
+{
+    display: none;
+    position: absolute;
+    bottom: 0px;
+}
+.wantit .gameBtn em
+{
+    display: none;
+}
+#dvGames:not(.purchaseMode) .canvotetrue.wantit:hover .avote
+{
+    display: block;
+}
+#dvGames.purchaseMode .wantit:hover .apurchase
+{
+    display: block;
+}
+.gotit .gameBtn
+{
+    bottom: 15px;
+    height: 30px;
+    width: 100%;
+    left: 0px;
+    text-align: center;
+    border: 0px solid  #000;
+}
+.gotit .gameBtn em
+{
+    color: #666;
+    font-size: 14px;
+    font-weight: bold;
+    display: inline;
+}
+
+/* New Game */
+#dvNewGame
+{
+    display: none;
+}
+.newgame
+{
+    cursor: pointer;
+}
+.ngxtrue
+{
+    width: 330px;
+}
+.newgame .gameTitle h3
+{
+    margin-bottom: 5px;
+}
+.gameForm
+{
+    display: none;
+    padding-left: 25px;
+}
+.spErr
+{
+    color: #AA0000;
+    display: none;
+}
+.gameForm label
+{
+    display: block;
+    float: left;
+    width: 40px;
+}
+.gameForm input
+{
+    width: 225px;
+}
+.ngBtns div
+{
+    margin: 5px 5px 0px 0px;
+}
+.gamePlus
+{
+    position: absolute;
+    bottom: 45px;
+    left: 0px;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: #888;
+    border: 0px solid  #000;
+    font-size: 60px;
+}
