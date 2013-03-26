@@ -37,8 +37,8 @@
                 <!-- 'Sort By' Filter' -->
                 <div class="radios" id="bsSort">
                     <div><strong>Sort</strong></div>
-                    <input type="radio" name="rSort" id="rVotes" checked="checked" value="arrSortVote" /><label for="rVotes">By Votes</label>
-                    <input type="radio" name="rSort" id="rAlpha" value="arrSortTitle" /><label for="rAlpha">Alphabetically</label>
+                    <input type="radio" name="rSort" id="rVotes" checked="checked" value="Votes" /><label for="rVotes">By Votes</label>
+                    <input type="radio" name="rSort" id="rAlpha" value="Title" /><label for="rAlpha">Alphabetically</label>
                 </div>
                 <!-- Menu Button -->
                 <div id="dvSett">

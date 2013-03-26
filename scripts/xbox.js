@@ -26,6 +26,11 @@ var xbox = {
             $.post(xbox.userUrl, { action: 'reset' }, cbFunc);
         }
     },
+	
+	//Get current sorting criterion
+	checkSort: function() {
+		return $('#bsSort :radio:checked').attr('value');
+	},
 
     //Get eligibility from server, set canVote, call callBack
     checkVote: function(callBack) {
@@ -45,12 +50,12 @@ var xbox = {
 
     //Get All gams from server and render
     getAll: function () {
-        $.post(xbox.gamesUrl, { action: 'getAll' }, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.gamesUrl, { action: 'getAll', sort: xbox.checkSort() }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Retrieve filtered list of games from server and render
     getFind: function (p,v) {
-        $.post(xbox.gamesUrl, { action: 'find', param: p, val: v }, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.gamesUrl, { action: 'find', sort: xbox.checkSort(), param: p, value: v }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Adds vote for a game
@@ -98,7 +103,7 @@ var xbox = {
     },
 
     //Function used in sorting game arrays by vote (numerically)
-    arrSortVote: function(a,b) {
+    arrSortVotes: function(a,b) {
         return parseInt(b.Votes) - parseInt(a.Votes);
     },
 
@@ -188,7 +193,7 @@ var xbox = {
 
         //Sort results
         games.sort(function (a, b) {
-            var srtFun = xbox[$('#bsSort :radio:checked').attr('value')];
+            var srtFun = xbox['arrSort'+xbox.checkSort()];
             return srtFun(a, b);
         });
 
