@@ -1,5 +1,10 @@
 <?php //Bismillah
 error_reporting(E_ALL | E_STRICT);
+
+//include userController
+require_once("user.php");
+
+
 /*---------------*\
 |   gamesModel Class   |
 \*---------------*/
@@ -78,22 +83,95 @@ class gamesModel
 	//SOAP: Retrieve All Games
 	public function getGames()
 	{
-		$client = $this->soap;
-		$games = $client->getGames($this->soapEnv);
-		$this->games = $games->GetGamesResult->XboxGame;
+		try
+		{
+			$client = $this->soap;
+			$games = $client->getGames($this->soapEnv);
+			//If any games are found
+			if (isset($games->GetGamesResult->XboxGame))
+			{
+				//Return games
+				$this->games = $games->GetGamesResult->XboxGame;
+			}
+		}
+		catch (Exception $e)
+		{
+			$this->error = $e->faultstring;
+		}
 		return $this->respond();
 	}
 	
 	//SOAP: Add New Game
+	public function addGame($title)
+	{
+		try
+		{
+			$client = $this->soap;
+			$this->soapEnv['title'] = $title;
+			$client->addGame($this->soapEnv);
+		}
+		catch (Exception $e)
+		{
+			$this->error = $e->faultstring;
+		}
+		return $this->respond();
+	}
 	
 	//SOAP: Vote for Game
+	public function addVote($id)
+	{
+		try
+		{
+			$client = $this->soap;
+			$this->soapEnv['id'] = $id;
+			$client->addVote($this->soapEnv);
+		}
+		catch (Exception $e)
+		{
+			$this->error = $e->faultstring;
+		}
+		return $this->respond();
+	}
 	
 	//SOAP: Purchase Game
+	public function setGotIt($id)
+	{
+		try
+		{
+			$client = $this->soap;
+			$this->soapEnv['id'] = $id;
+			$client->setGotIt($this->soapEnv);
+		}
+		catch (Exception $e)
+		{
+			$this->error = $e->faultstring;
+		}
+		return $this->respond();
+	}
 	
 	//SOAP: Clear Games
-	
+	public function clearGames()
+	{
+		try
+		{
+			$client = $this->soap;
+			$client->clearGames($this->soapEnv);
+		}
+		catch (Exception $e)
+		{
+			$this->error = $e->faultstring;
+		}
+		return $this->respond();
+	}
 }
+/*-------------------------*\
+|   gamesController Class   |
+\*-------------------------*/
+/*
+DESCRIPTION:
+	Provides interface between xbox.js and gamesModel
 
+*/
 class gamesController
 {
 	public $games = array();
@@ -104,15 +182,12 @@ class gamesController
 	protected $gameProperties = array('Id', 'Title', 'Status', 'Votes');
 	
 	protected $data;
+	protected $user;
 	
+	//MVC: The constructor contains code that would be appropriate within the controller class, outside function declarations
 	public function __construct()
 	{
-		$this->index();
-	}
-	
-	//MVC: This contains the code that would be appropriate inside the index() or indexAction() function of the Games Controller within an MVC framework
-	public function index()
-	{
+		//Create instance of gamesModel
 		$this->soap = new gamesModel();
 		if ($this->soap->error)
 		{
@@ -120,43 +195,20 @@ class gamesController
 			$this->respond();
 		}
 		
-		//Set data from $_POST
+		//Creates an instance of a userController
+		$this->user = new userController();
+		
+		//Sets data from $_POST
 		if (isset($_POST))
 		{
 			$this->data = $_POST;
-		}
-		
-		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : 'getAll';
-		
-		//VALIDATION: Check to see if requested action is valid
-		if (method_exists($this, $action))
-		{
-			//VALIDATION: Allow access to public function only
-			$refl = new ReflectionMethod($this, $action);
-			if ($refl->isPublic())
-			{
-				//Call requested action
-				$this->$action();
-			}
-			else
-			{
-				//ERROR: Attempted to access non-public function
-				$this->error = "Error: method '".$action."' is not public!";
-				$this->respond();
-			}
-		}
-		else
-		{
-			//ERROR: Function does not exist
-			$this->error = "Error: method '".$action."' does not exist!";
-			$this->respond();
 		}
 	}
 	
 	//MVC: Sends JSON Response to View
 	public function respond()
 	{
+		$this->arrGames();
 		$this->checkGames();
 		$json = array('games'=>$this->games, 'error'=>$this->error);
 		$this->json = json_encode($json);
@@ -168,7 +220,7 @@ class gamesController
 	protected function checkGames()
 	{
 		//If there isn't already an error, and if games isn't empty
-		if (!$this->error && count($this->games)>0)
+		if (!$this->error && is_array($this->games) && count($this->games) > 0)
 		{
 			$errStr = "";
 			$sep = "";
@@ -201,28 +253,49 @@ class gamesController
 		}
 		return false;
 	}
+	
+	//Checks if games is in array format, wraps games in array if not (occurs when zero or one game exists)
+	protected function arrGames()
+	{
+		if (!is_array($this->games))
+		{
+			$this->games = array($this->games);
+		}
+		return $this->games;
+	}
+	
 	//Sorts Games
 	protected function sortGames($sort= false)
 	{
-		//Set Default Sort to Title
-		$sort = (!$sort) ? "Title" : $sort;
-		
-		//Sort function callbacks
-		function srtTitle($a, $b)
+		//If the games array isn't empty
+		if (is_array($this->games) && count($this->games) > 0)
 		{
-			return strcmp(strtolower($a->Title),strtolower($b->Title));
-		}
-		function srtVotes ($a, $b)
-		{
-			if ($a->Votes==$b->Votes)
+			//Set Default Sort to Title
+			$sort = (!$sort) ? "Title" : $sort;
+			
+			//Sort function callbacks
+			if (!function_exists('srtTitle'))
 			{
-				return 0;
+				function srtTitle($a, $b)
+				{
+					return strcmp(strtolower($a->Title),strtolower($b->Title));
+				}
 			}
-			return ($a->Votes > $b->Votes) ? -1 : 1;
+			if (!function_exists('srtVotes'))
+			{
+				function srtVotes ($a, $b)
+				{
+					if ($a->Votes==$b->Votes)
+					{
+						return 0;
+					}
+					return ($a->Votes > $b->Votes) ? -1 : 1;
+				}
+			}
+			
+			//Sort games
+			usort($this->games, "srt".$sort);
 		}
-		
-		//Sort games
-		usort($this->games, "srt".$sort);
 		return $this->games;
 	}
 	
@@ -231,9 +304,11 @@ class gamesController
 	{
 		//Filter Callback: If parameter matches, return true, else return false
 		$fltStr = "return (strtolower(\$game->".$param.") == strtolower(\"".$value."\")) ? true : false;";
-			
+		
+		$this->arrGames();
+
 		//If at least one game exists to filter
-		if (count($this->games) > 0)
+		if (is_array($this->games) && count($this->games) > 0)
 		{
 			//If a parameter and a value are provided
 			if ($param&&$value)
@@ -258,7 +333,11 @@ class gamesController
 	protected function loadGames($sort = false, $param = false, $value = false)
 	{
 		//Load games from gamesModel
+
 		$rs = $this->soap->getGames();
+		$this->arrGames();
+
+		
 		$this->games = $rs['games'];
 		$this->error = $rs['error'];
 		//Check for errors during initialization
@@ -272,28 +351,187 @@ class gamesController
 		
 		//Sort Games
 		$this->sortGames($sort);
-		
-		//Send Json response
-		$this->respond();
-		
 	}
 	
-	//Get All Games
+	//Return All Games
 	public function getAll()
 	{
 		$sort = $this->checkData('sort');
 		$this->loadGames($sort);
+		$this->respond();
 	}
 	
-	//Get Filtered games
+	//Return Filtered games
 	public function find()
 	{
 		$sort = $this->checkData('sort');
 		$param = $this->checkData('param');
 		$value = $this->checkData('value');
 		$this->loadGames($sort, $param, $value);
+		$this->respond();
+	}
+	
+	//Add a Game
+	public function add()
+	{
+		$title = $this->checkData('title');
+		
+		//VALIDATION: check user eligibility
+		if (!$this->user->checkEligible())
+		{
+			//ERROR: user is ineligible
+			$this->error = "You are not eligible to add a game.";
+			$this->respond();
+		}
+		
+		//VALIDATION: check for blank title
+		if (!$title)
+		{
+			//ERRROR: blank title
+			$this->error = "You must provide a title.";
+			$this->respond();
+		}
+		
+		//VALIDATION: check for duplicates
+		$this->loadGames(false, "Title", $title);
+		if (is_array($this->games) && count($this->games) > 0)
+		{
+			//Check if game is purchased (to help user locate game)
+			$pch = ".";
+			if ($this->games[0]->Status=="gotit")
+			{
+				$pch = " and has been purchased.";
+			}
+			//ERROR: Duplicate title
+			$this->error = "'".$this->games[0]->Title."' already exists".$pch;
+			$this->respond();
+		}
+		
+		//Add game via model
+		$rs = $this->soap->addGame($title);
+		
+		//If there are no errors, tell user model to set lastVote
+		if (!$rs['error'])
+		{
+			$this->user->castVote();
+		}
+		
+		//Return new game to View
+		$this->loadGames(false, "Title", $title);
+		$this->respond();
+	}
+		
+	//Cast a Vote for a Title
+	public function vote()
+	{
+		$id = $this->checkData('id');
+		
+		//VALIDATION: Check to see if game exists
+		$this->loadGames(false, "Id", $id);
+		if (count($this->games) != 1)
+		{
+			//ERROR: Invalid Id
+			$this->error = "Error: attempted to vote for an invalid Id - ".$id.".";
+			$this->respond();
+		}
+		
+		//VALIDATION: Check to see if user can vote
+		if (!$this->user->checkEligible())
+		{
+			//ERROR: User is Ineligible
+			$this->error = "Error: user is ineligible to vote.";
+			$this->respond();
+		}
+		
+		//Tell Model to add vote
+		$rs = $this->soap->addVote($id);
+		
+		//If there are no errors, tell user model to set lastVote
+		if (!$rs['error'])
+		{
+			$this->user->castVote();
+		}
+		
+		//Return gamesModel's response to View
+		$this->loadGames();
+		$this->error = $rs['error'];
+		$this->respond();
+	}
+	
+	//Purchase a game
+	public function purchase()
+	{
+		$id = $this->checkData('id');
+		
+		//VALIDATION: Check to see if game exists
+		$this->loadGames(false, "Id", $id);
+		if (count($this->games) != 1)
+		{
+			//ERROR: Invalid Id
+			$this->error = "Error: attempted to purchase with an invalid Id - ".$id.".";
+			$this->respond();
+		}
+		
+		//Tell Model to purchase game
+		$rs = $this->soap->setGotIt($id);
+		
+		//Return gamesModel's response to View
+		$this->loadGames();
+		$this->error = $rs['error'];
+		$this->respond();
+	}
+	
+	//Clear All Games
+	public function clearAll()
+	{
+		//Tell Model to purchase game
+		$rs = $this->soap->clearGames();
+		
+		//Return gamesModel's response to View
+		unset($this->games);
+		$this->games = array();
+		$this->error = $rs['error'];
+		$this->respond();
+	}
+	
+	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
+	public function simulateFramework()
+	{
+		//Set action to posted action or use default action
+		$action = (isset($this->data['action'])) ? $this->data['action'] : 'getAll';
+		
+		//VALIDATION: Check to see if requested action is valid
+		if (method_exists($this, $action))
+		{
+			//VALIDATION: Allow access to public function only
+			$refl = new ReflectionMethod($this, $action);
+			if ($refl->isPublic())
+			{
+				//Call requested action
+				$this->$action();
+			}
+			else
+			{
+				//ERROR: Attempted to access non-public function
+				$this->error = "Error: method '".$action."' is not public!";
+				$this->respond();
+			}
+		}
+		else
+		{
+			//ERROR: Function does not exist
+			$this->error = "Error: method '".$action."' does not exist!";
+			$this->respond();
+		}
 	}
 }
-$asif = new gamesController();
+
+//-----------------------------------------------------------------------------
+//MVC: Everything below is not necessary when migrating to a real MVC framework
+//-----------------------------------------------------------------------------
+
+$games = new gamesController();
+//MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
+$games->simulateFramework();
 
 ?>

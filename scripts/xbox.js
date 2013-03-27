@@ -23,7 +23,7 @@ var xbox = {
         //Resets the user's vote for the day
         resetVote: function(cb) {
             cbFunc = function() { xbox.checkVote(cb); };
-            $.post(xbox.userUrl, { action: 'reset' }, cbFunc);
+            $.post(xbox.userUrl, { action: 'resetVote' }, cbFunc);
         }
     },
 	
@@ -276,7 +276,7 @@ var xbox = {
             return false;
         }
         //Send add request to server
-        $.post(xbox.gamesUrl, { action: 'addUrl', title: tx }, function (data) {
+        $.post(xbox.gamesUrl, { action: 'add', title: tx }, function (data) {
             xbox.json = data;
             //If error exists, return error
             if (data.error)
