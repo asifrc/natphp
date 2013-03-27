@@ -1,34 +1,39 @@
 <?php //Bismillah
-error_reporting(E_ALL | E_STRICT);
+error_reporting(E_ALL | E_STRICT); //DEBUG
 
-//include userController
+//Include userController
 require_once("user.php");
 
 
-/*---------------*\
+/*--------------------*\
 |   gamesModel Class   |
-\*---------------*/
+\*--------------------*/
 /*
 DESCRIPTION:
 	Provides interface between gamesController and SOAP services
 
-*/
+MVC MIGRATION:
+	Belongs in Model folder
 
+*/
 class gamesModel
 {
-	
+	//Soap Service
 	protected $soapURL = "http://xbox2.sierrabravo.net/xbox2.asmx?wsdl";
 	protected $apiKey = "c18316f737b74b7636e06e24a99d6d6e";
+	protected $soap; //SoapClient
+	protected $soapEnv; //Soap Envelope
 	
-	protected $soap;
-	protected $soapEnv;
-	
+	//Values to be returned to controllers
 	public $games = array();
 	public $error = false;
 	
-	//Constructor
+	//MVC: Make sure to uncomment call to parent constructor when migrating to a real MVC
 	public function __construct()
 	{
+		//MVC: call parent constructor
+		//parent::__construct();
+		
 		//Attempt to connect to SOAP Service and create a SoapClient
 		try
 		{
@@ -50,11 +55,12 @@ class gamesModel
 	//MVC: Sends Response to Controller
 	public function respond()
 	{
+		//Controller expects an array containing a games array and an error string/bool
 		$response = array('games'=>$this->games, 'error'=>$this->error);
 		return $response;
 	}		
 	
-	//SOAP: Validate Key
+	//Validate Key
 	protected function checkKey()
 	{
 		$client = $this->soap;
@@ -80,7 +86,7 @@ class gamesModel
 	}
 	
 	
-	//SOAP: Retrieve All Games
+	//Retrieve All Games
 	public function getGames()
 	{
 		try
@@ -90,7 +96,7 @@ class gamesModel
 			//If any games are found
 			if (isset($games->GetGamesResult->XboxGame))
 			{
-				//Return games
+				//Return games (else empty games array will be returned)
 				$this->games = $games->GetGamesResult->XboxGame;
 			}
 		}
@@ -101,7 +107,7 @@ class gamesModel
 		return $this->respond();
 	}
 	
-	//SOAP: Add New Game
+	//Add New Game
 	public function addGame($title)
 	{
 		try
@@ -117,7 +123,7 @@ class gamesModel
 		return $this->respond();
 	}
 	
-	//SOAP: Vote for Game
+	//Vote for Game
 	public function addVote($id)
 	{
 		try
@@ -133,7 +139,7 @@ class gamesModel
 		return $this->respond();
 	}
 	
-	//SOAP: Purchase Game
+	//Purchase Game
 	public function setGotIt($id)
 	{
 		try
@@ -149,7 +155,7 @@ class gamesModel
 		return $this->respond();
 	}
 	
-	//SOAP: Clear Games
+	//Clear Games
 	public function clearGames()
 	{
 		try
@@ -164,29 +170,40 @@ class gamesModel
 		return $this->respond();
 	}
 }
+
 /*-------------------------*\
 |   gamesController Class   |
 \*-------------------------*/
 /*
 DESCRIPTION:
 	Provides interface between xbox.js and gamesModel
+MVC MIGRATION:
+	Belongs in Controllers folder
 
 */
 class gamesController
 {
+	//Response Properties
 	public $games = array();
 	public $error = false;
 	public $json = "";
 	
-	protected $soap; //gamesModel
+	//gamesModel
+	protected $soap; 
 	protected $gameProperties = array('Id', 'Title', 'Status', 'Votes');
 	
-	protected $data;
+	//userController
 	protected $user;
 	
-	//MVC: The constructor contains code that would be appropriate within the controller class, outside function declarations
+	//Posteds Data
+	protected $data;
+	
+	//MVC: Make sure to uncomment call to parent constructor when migrating to a real MVC
 	public function __construct()
 	{
+		//MVC: call parent constructor
+		//parent::__construct();
+		
 		//Create instance of gamesModel
 		$this->soap = new gamesModel();
 		if ($this->soap->error)
@@ -195,10 +212,10 @@ class gamesController
 			$this->respond();
 		}
 		
-		//Creates an instance of a userController
+		//Create an instance of a userController
 		$this->user = new userController();
 		
-		//Sets data from $_POST
+		//MVC: Set data from $_POST
 		if (isset($_POST))
 		{
 			$this->data = $_POST;
@@ -208,8 +225,13 @@ class gamesController
 	//MVC: Sends JSON Response to View
 	public function respond()
 	{
+		//Ensure games is received by xbox.js as an array and not an object
 		$this->arrGames();
+		
+		//Ensure games objects have the necessary properties for xbox.js to function properly
 		$this->checkGames();
+		
+		//Package, encode, and send JSON; Xbox.js expects a JSON object with a games array and error string/false
 		$json = array('games'=>$this->games, 'error'=>$this->error);
 		$this->json = json_encode($json);
 		header("Content-Type:text/json");
@@ -227,15 +249,19 @@ class gamesController
 			//Go through each property and ensure it exists
 			foreach ($this->gameProperties as $prop)
 			{
-				$g = array_slice($this->games,0,1); //Use first game as sample
+				//Use first game as sample
+				$g = array_slice($this->games,0,1); 
 				if (!property_exists($g[0], $prop))
 				{
+					//Add to errorstring if property is not present
 					 $errStr .= $sep.$prop;
 					 $sep = ", ";
 				}
 			}
+			//If at least on property is missing
 			if ($errStr!="")
 			{
+				//Send Xbox.js a warning that the games array may not function as expected
 				$this->error = "Warning: Games objects missing necessary properties: ".$errStr;
 				return false;
 			}
@@ -243,7 +269,7 @@ class gamesController
 		return true;
 	}
 	
-	//Checks if data field exists, returns empty string if it doesn't
+	//Checks if data field exists, returns false if it doesn't
 	protected function checkData($field = false)
 	{
 		if ($field)
@@ -264,8 +290,8 @@ class gamesController
 		return $this->games;
 	}
 	
-	//Sorts Games
-	protected function sortGames($sort= false)
+	//Sorts Games during loadGames()
+	protected function sortGames($sort = false)
 	{
 		//If the games array isn't empty
 		if (is_array($this->games) && count($this->games) > 0)
@@ -273,15 +299,17 @@ class gamesController
 			//Set Default Sort to Title
 			$sort = (!$sort) ? "Title" : $sort;
 			
+			//NOTE: I would generally use closures for usort instead of predefining callbacks, but am restricted by PHP 5.2
+			
 			//Sort function callbacks
-			if (!function_exists('srtTitle'))
+			if (!function_exists('srtTitle')) //Prevent redeclaration
 			{
 				function srtTitle($a, $b)
 				{
 					return strcmp(strtolower($a->Title),strtolower($b->Title));
 				}
 			}
-			if (!function_exists('srtVotes'))
+			if (!function_exists('srtVotes')) //Prevent redeclaration
 			{
 				function srtVotes ($a, $b)
 				{
@@ -299,12 +327,15 @@ class gamesController
 		return $this->games;
 	}
 	
-	//Filters Games
+	//Filters Games during loadGames()
 	protected function filterGames($param = false, $value = false)
 	{
+		//NOTE: I would use an anonymous function in place of $fltStr if I weren't restricted by PHP 5.2
+		
 		//Filter Callback: If parameter matches, return true, else return false
 		$fltStr = "return (strtolower(\$game->".$param.") == strtolower(\"".$value."\")) ? true : false;";
 		
+		//Ensure games is an array
 		$this->arrGames();
 
 		//If at least one game exists to filter
@@ -313,8 +344,8 @@ class gamesController
 			//If a parameter and a value are provided
 			if ($param&&$value)
 			{
-				//If parameter is valid
-				$g = array_slice($this->games,0,1); //Use first game as sample
+				//If parameter is valid (using first game as sample)
+				$g = array_slice($this->games,0,1);
 				if (property_exists($g[0], $param))
 				{
 					//Filter Games
@@ -322,6 +353,7 @@ class gamesController
 				}
 				else
 				{
+					//Else send warning to xbox.js
 					$this->error = "Warning: invalid filter parameter '".$param."'";
 				}
 			}
@@ -332,17 +364,18 @@ class gamesController
 	//Loads game from gamesModel
 	protected function loadGames($sort = false, $param = false, $value = false)
 	{
-		//Load games from gamesModel
-
+		//Get games from gamesModel, and ensure it's an array
 		$rs = $this->soap->getGames();
 		$this->arrGames();
-
 		
+		//Load games and error into gamesController's properties
 		$this->games = $rs['games'];
 		$this->error = $rs['error'];
+		
 		//Check for errors during initialization
 		if ($this->error)
 		{
+			//ERROR: Send gamesModel's error to xbox.js
 			$this->respond();
 		}
 		
@@ -356,6 +389,7 @@ class gamesController
 	//Return All Games
 	public function getAll()
 	{
+		//Check for a sort value, load games, and send to xbox.js
 		$sort = $this->checkData('sort');
 		$this->loadGames($sort);
 		$this->respond();
@@ -364,6 +398,7 @@ class gamesController
 	//Return Filtered games
 	public function find()
 	{
+		//Check for sort and filter values, load games accordingly, and send to xbox.js
 		$sort = $this->checkData('sort');
 		$param = $this->checkData('param');
 		$value = $this->checkData('value');
@@ -392,7 +427,7 @@ class gamesController
 			$this->respond();
 		}
 		
-		//VALIDATION: check for duplicates
+		//VALIDATION: check for duplicate title
 		$this->loadGames(false, "Title", $title);
 		if (is_array($this->games) && count($this->games) > 0)
 		{
@@ -416,7 +451,7 @@ class gamesController
 			$this->user->castVote();
 		}
 		
-		//Return new game to View
+		//Return ONLY new game to xbox.js
 		$this->loadGames(false, "Title", $title);
 		$this->respond();
 	}
@@ -484,7 +519,7 @@ class gamesController
 	//Clear All Games
 	public function clearAll()
 	{
-		//Tell Model to purchase game
+		//Tell Model to clear all games
 		$rs = $this->soap->clearGames();
 		
 		//Return gamesModel's response to View
@@ -493,17 +528,27 @@ class gamesController
 		$this->error = $rs['error'];
 		$this->respond();
 	}
-	
+}
+
+//-------------------------------------------------------------------------------
+//MVC: Everything below should be removed when migrating to a real MVC framework
+//-------------------------------------------------------------------------------
+
+class fakeMVC extends gamesController
+{
 	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
 	public function simulateFramework()
 	{
+		//Default Action
+		$defaultAction = 'getAll';
+	
 		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : 'getAll';
+		$action = (isset($this->data['action'])) ? $this->data['action'] : $defaultAction;
 		
-		//VALIDATION: Check to see if requested action is valid
+		//VALIDATION: Check to see if requested action exists
 		if (method_exists($this, $action))
 		{
-			//VALIDATION: Allow access to public function only
+			//VALIDATION: Allow access to public methods only
 			$refl = new ReflectionMethod($this, $action);
 			if ($refl->isPublic())
 			{
@@ -526,12 +571,8 @@ class gamesController
 	}
 }
 
-//-----------------------------------------------------------------------------
-//MVC: Everything below is not necessary when migrating to a real MVC framework
-//-----------------------------------------------------------------------------
-
-$games = new gamesController();
 //MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
+$games = new fakeMVC();
 $games->simulateFramework();
 
 ?>

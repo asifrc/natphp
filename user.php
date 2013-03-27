@@ -5,6 +5,9 @@
 /*
 DESCRIPTION:
 	Provides interface between userController and cookie contianing user information
+MVC MIGRATION:
+	Belongs in Model folder
+
 */
 class userModel
 {
@@ -14,7 +17,8 @@ class userModel
 	public function setLastVote()
 	{
 		$lv = time();
-		setcookie('lastVote', $lv, time()+(60*60*24) );
+		$expires = $lv + (60*60*24); //Expires in one day
+		setcookie('lastVote', $lv, $expires );
 		return $lv;
 	}
 	
@@ -24,29 +28,42 @@ class userModel
 		//Return cookie if it is set, or return false
 		return (isset($_COOKIE['lastVote'])) ? $_COOKIE['lastVote'] : false;
 	}
+	
 	//DEBUG: resets vote for debugging purposes
 	public function resetLastVote()
 	{
 		setcookie('lastVote', "", time()-3600);
 	}
 }
+
 /*------------------------*\
 |   userController Class   |
 \*------------------------*/
 /*
 DESCRIPTION:
-	Provides interface between View + gamesController and userModel
+	Provides interface between xbox.js + gamesController and userModel
+MVC MIGRATION:
+	Belongs in Controllers folder
+
 */
 class userController
 {
+	//userModel
 	protected $user;
+	
+	//Posted Data
 	protected $data;
+	
+	//Response Data
 	protected $error = false;
 	protected $eligible = false;
 	
-	//MVC: The constructor contains code that would be appropriate within the controller class, outside function declarations
+	//MVC: Make sure to uncomment call to parent constructor when migrating to a real MVC
 	public function __construct()
 	{
+		//MVC: call parent constructor
+		//parent::__construct();
+		
 		//Create instance of userModel
 		$this->user = new userModel();
 		
@@ -117,16 +134,27 @@ class userController
 		$this->user->setLastVote();
 	}
 		
+}
+
+//-------------------------------------------------------------------------------
+//MVC: Everything below should be removed when migrating to a real MVC framework
+//-------------------------------------------------------------------------------
+
+class fakeMVC extends userController
+{
 	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
 	public function simulateFramework()
 	{
+		//Default Action
+		$defaultAction = 'isEligible';
+	
 		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : 'isEligible';
+		$action = (isset($this->data['action'])) ? $this->data['action'] : $defaultAction;
 		
-		//VALIDATION: Check to see if requested action is valid
+		//VALIDATION: Check to see if requested action exists
 		if (method_exists($this, $action))
 		{
-			//VALIDATION: Allow access to public function only
+			//VALIDATION: Allow access to public methods only
 			$refl = new ReflectionMethod($this, $action);
 			if ($refl->isPublic())
 			{
@@ -149,15 +177,11 @@ class userController
 	}
 }
 
-//-----------------------------------------------------------------------------
-//MVC: Everything below is not necessary when migrating to a real MVC framework
-//-----------------------------------------------------------------------------
-
-//Call index only if user.php is not included in any other files
+//Call framework simulation only if user.php is not included within any other files (e.g. games.php)
 if (count(get_included_files()) < 2)
 {
-	$user = new userController();
 	//MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
+	$user = new fakeMVC();
 	$user->simulateFramework();
 }
 
