@@ -5,9 +5,9 @@ var xbox = {
 		//Set to True if MVC framework rewrites url into baseurl/method
 		rewrite: false,
 		//URL for Games controller
-		games: "games.php",
+		games: "GamesController.php",
 		//URL for User controller
-		user: "user.php",
+		user: "UsersController.php",
 		
 		//Returns properly mapped url for ajax calls
 		map: function(controller, action) {

@@ -11,7 +11,7 @@ MVC MIGRATION:
 	Make sure to extend MVC's Model class
 
 */
-class gamesModel
+class Game
 {
 	//Soap Service
 	protected $soapURL = "http://xbox2.sierrabravo.net/xbox2.asmx?wsdl";

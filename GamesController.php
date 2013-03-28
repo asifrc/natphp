@@ -14,7 +14,7 @@ MVC MIGRATION:
 	Belongs in Controllers folder
 
 */
-class games extends fakeMVCController
+class GamesController extends fakeMVCController
 {
 	//Response Properties
 	public $games = array();
@@ -38,8 +38,8 @@ class games extends fakeMVCController
 		//parent::__construct();
 		
 		//MVC: Create instance of gamesModel; Substitute with appropriate method for MVC (e.g. for CodeIgniter: $this->load->model('gamesModel','soap');
-		require_once('gamesModel.php');
-		$this->soap = new gamesModel();
+		require_once('Game.php');
+		$this->soap = new Game();
 		
 		if ($this->soap->error)
 		{
@@ -48,8 +48,8 @@ class games extends fakeMVCController
 		}
 		
 		//MVC: Create an instance of a userController; Substitute with appropriate method for MVC (left as is for CodeIgniter)
-		require_once('user.php');
-		$this->user = new user();
+		require_once('UsersController.php');
+		$this->user = new UsersController();
 		
 		//MVC: Set data from $_POST
 		if (isset($_POST))
@@ -377,7 +377,7 @@ class games extends fakeMVCController
 //-------------------------------------------------------------------------------
 
 //MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
-$games = new games();
+$games = new GamesController();
 $games->simulateFramework();
 
 ?>
