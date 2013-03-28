@@ -15,7 +15,7 @@ MVC MIGRATION:
 		2. Uncomment $uses array
 		3. Delete both lines calling ->load->model();
 */
-class GamesController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
+class GamesController extends CI_Controller // <- Step 1.) Change to proper Controller class when migrating to MVC framework
 {
 	//Response Properties
 	public $response = array();
