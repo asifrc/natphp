@@ -1,11 +1,25 @@
 ﻿//The xbox object will contain everything we need for dealing with the backend
 var xbox = {
-	//URL for Games controller
-	gamesUrl: "games.php",
-	
-	//URL for User controller
-	userUrl: "user.php",
-	
+	//URL Mapping for ajax funtions
+	url: {
+		//Set to True if MVC framework rewrites url into baseurl/method
+		rewrite: false,
+		//URL for Games controller
+		games: "games.php",
+		//URL for User controller
+		user: "user.php",
+		
+		//Returns properly mapped url for ajax calls
+		map: function(controller, action) {
+			base = xbox.url[controller];
+			if (xbox.url.rewrite)
+			{
+				base += "/" + action;
+			}
+			return base;
+		}
+	},
+			
     //Voter Eligibility
     canVote: true,
 
@@ -23,7 +37,7 @@ var xbox = {
         //Resets the user's vote for the day
         resetVote: function(cb) {
             cbFunc = function() { xbox.checkVote(cb); };
-            $.post(xbox.userUrl, { action: 'resetVote' }, cbFunc);
+            $.post(xbox.url.map('user', 'resetVote'), { action: 'resetVote' }, cbFunc);
         }
     },
 	
@@ -34,7 +48,7 @@ var xbox = {
 
     //Get eligibility from server, set canVote, call callBack
     checkVote: function(callBack) {
-        $.post(xbox.userUrl, { action: 'isEligible' }, function (data) {
+        $.post(xbox.url.map('user', 'isEligible'), { action: 'isEligible' }, function (data) {
             xbox.canVote = data.eligible;
             if (typeof callBack == 'function')
 			{
@@ -50,17 +64,17 @@ var xbox = {
 
     //Get All gams from server and render
     getAll: function () {
-        $.post(xbox.gamesUrl, { action: 'getAll', sort: xbox.checkSort() }, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.url.map('games', 'getAll'), { action: 'getAll', sort: xbox.checkSort() }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Retrieve filtered list of games from server and render
     getFind: function (p,v) {
-        $.post(xbox.gamesUrl, { action: 'find', sort: xbox.checkSort(), param: p, value: v }, function (data) { xbox.games = data.games; xbox.renderGames(); });
+        $.post(xbox.url.map('games', 'find'), { action: 'find', sort: xbox.checkSort(), param: p, value: v }, function (data) { xbox.games = data.games; xbox.renderGames(); });
     },
 
     //Adds vote for a game
     addVote: function (id) {
-        $.post(xbox.gamesUrl, { action: 'vote', id: id }, function (data) {
+        $.post(xbox.url.map('games', 'vote'), { action: 'vote', id: id }, function (data) {
             xbox.json = data;
             //Resets vote if unlimited votes enabled
             if (xbox.dev.unlVotes)
@@ -78,7 +92,7 @@ var xbox = {
 
     //Mark game as purchased
     purchase: function (id) {
-        $.post(xbox.gamesUrl, { action: 'purchase', id: id}, function (data) {
+        $.post(xbox.url.map('games', 'purchase'), { action: 'purchase', id: id}, function (data) {
             xbox.json = data;
             //Display "Purchased" text
             $(".game[data-id='game" + id + "']").removeClass('wantit').addClass('gotit');
@@ -96,7 +110,7 @@ var xbox = {
     //Clears all games
     clearGames: function () {
         //NOTE: I would generally create a confirmation dialog, but didn't due to time constraints
-        $.post(xbox.gamesUrl, { action: 'clearAll' }, function (data) {
+        $.post(xbox.url.map('games', 'clearAll'), { action: 'clearAll' }, function (data) {
             xbox.games = data.games;
             xbox.renderGames();
         });
@@ -276,7 +290,7 @@ var xbox = {
             return false;
         }
         //Send add request to server
-        $.post(xbox.gamesUrl, { action: 'add', title: tx }, function (data) {
+        $.post(xbox.url.map('games', 'add'), { action: 'add', title: tx }, function (data) {
             xbox.json = data;
             //If error exists, return error
             if (data.error)
@@ -287,7 +301,7 @@ var xbox = {
             //Successful Add, convert newgame box to show the newly added game
             game = data.games[0];
             $('.newgame .gameTitle h3').html(game.Title);
-            $('.newgame .gameForm').fadeOut(200, function () { $('.newgame .gameForm').remove();  console.log('step2'); });
+            $('.newgame .gameForm').fadeOut(200, function () { $('.newgame .gameForm').remove(); });
             $('.newgame').animate({ width: 150 },{
                 queue: false,
                 complete: function () {

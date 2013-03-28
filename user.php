@@ -1,40 +1,6 @@
 <?php //Bismillah
-/*-------------------*\
-|   userModel Class   |
-\*-------------------*/
-/*
-DESCRIPTION:
-	Provides interface between userController and cookie contianing user information
-MVC MIGRATION:
-	Belongs in Model folder
-
-*/
-class userModel
-{
-	protected $lastVote;
-	
-	//Sets cookie with last vote as Unix timestamp
-	public function setLastVote()
-	{
-		$lv = time();
-		$expires = $lv + (60*60*24); //Expires in one day
-		setcookie('lastVote', $lv, $expires );
-		return $lv;
-	}
-	
-	//Gets last vote from cookie
-	public function getLastVote()
-	{
-		//Return cookie if it is set, or return false
-		return (isset($_COOKIE['lastVote'])) ? $_COOKIE['lastVote'] : false;
-	}
-	
-	//DEBUG: resets vote for debugging purposes
-	public function resetLastVote()
-	{
-		setcookie('lastVote', "", time()-3600);
-	}
-}
+//MVC: fake MVC controller parent class; REMOVE during migration
+require_once("fakeMVCController.php");
 
 /*------------------------*\
 |   userController Class   |
@@ -46,10 +12,10 @@ MVC MIGRATION:
 	Belongs in Controllers folder
 
 */
-class userController
+class user extends fakeMVCController
 {
 	//userModel
-	protected $user;
+	public $user;
 	
 	//Posted Data
 	protected $data;
@@ -64,10 +30,11 @@ class userController
 		//MVC: call parent constructor
 		//parent::__construct();
 		
-		//Create instance of userModel
+		//MVC: Create instance of userModel; Substitute with appropriate method for MVC (e.g. for CodeIgniter: $this->load->model('userModel','user');
+		require_once('userModel.php');
 		$this->user = new userModel();
 		
-		//Set data from $_POST
+		//MVC: Set data from $_POST
 		if (isset($_POST))
 		{
 			$this->data = $_POST;
@@ -75,6 +42,12 @@ class userController
 		
 		//Set default timezone (prevents E_STRICT notice in PHP 5.2)
 		date_default_timezone_set('America/Chicago');
+	}
+	
+	//MVC: default action
+	public function index()
+	{
+		$this->getAll();
 	}
 	
 	//MVC: Sends JSON Response to View
@@ -140,48 +113,11 @@ class userController
 //MVC: Everything below should be removed when migrating to a real MVC framework
 //-------------------------------------------------------------------------------
 
-class fakeMVC extends userController
-{
-	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
-	public function simulateFramework()
-	{
-		//Default Action
-		$defaultAction = 'isEligible';
-	
-		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : $defaultAction;
-		
-		//VALIDATION: Check to see if requested action exists
-		if (method_exists($this, $action))
-		{
-			//VALIDATION: Allow access to public methods only
-			$refl = new ReflectionMethod($this, $action);
-			if ($refl->isPublic())
-			{
-				//Call requested action
-				$this->$action();
-			}
-			else
-			{
-				//ERROR: Attempted to access non-public function
-				$this->error = "Error: method '".$action."' is not public!";
-				$this->respond();
-			}
-		}
-		else
-		{
-			//ERROR: Function does not exist
-			$this->error = "Error: method '".$action."' does not exist!";
-			$this->respond();
-		}
-	}
-}
-
-//Call framework simulation only if user.php is not included within any other files (e.g. games.php)
-if (count(get_included_files()) < 2)
+//Prevent from being called when included within user controller
+if (count(get_included_files()) < 3)
 {
 	//MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
-	$user = new fakeMVC();
+	$user = new user();
 	$user->simulateFramework();
 }
 

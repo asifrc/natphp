@@ -1,175 +1,8 @@
 <?php //Bismillah
 error_reporting(E_ALL | E_STRICT); //DEBUG
 
-//Include userController
-require_once("user.php");
-
-
-/*--------------------*\
-|   gamesModel Class   |
-\*--------------------*/
-/*
-DESCRIPTION:
-	Provides interface between gamesController and SOAP services
-
-MVC MIGRATION:
-	Belongs in Model folder
-
-*/
-class gamesModel
-{
-	//Soap Service
-	protected $soapURL = "http://xbox2.sierrabravo.net/xbox2.asmx?wsdl";
-	protected $apiKey = "c18316f737b74b7636e06e24a99d6d6e";
-	protected $soap; //SoapClient
-	protected $soapEnv; //Soap Envelope
-	
-	//Values to be returned to controllers
-	public $games = array();
-	public $error = false;
-	
-	//MVC: Make sure to uncomment call to parent constructor when migrating to a real MVC
-	public function __construct()
-	{
-		//MVC: call parent constructor
-		//parent::__construct();
-		
-		//Attempt to connect to SOAP Service and create a SoapClient
-		try
-		{
-			@$this->soap = new SoapClient($this->soapURL); //Warning supressed, as invalid url triggers both warnings and catch();
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-			return false;
-		}
-		
-		//Insert apiKey into Soap Envelope Array
-		$this->soapEnv = array('apiKey'=> $this->apiKey);
-		
-		//Validate API Key
-		return $this->checkKey();
-	}
-	
-	//MVC: Sends Response to Controller
-	public function respond()
-	{
-		//Controller expects an array containing a games array and an error string/bool
-		$response = array('games'=>$this->games, 'error'=>$this->error);
-		return $response;
-	}		
-	
-	//Validate Key
-	protected function checkKey()
-	{
-		$client = $this->soap;
-		try
-		{
-			$valid = $client->checkKey($this->soapEnv);
-			if (!$valid->CheckKeyResult)
-			{
-				$this->error = "Error: Invalid API Key provided to SOAP Service.";
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-		catch(Exception $e)
-		{
-			$this->error = $e->faultstring;
-			$this->respond();
-			return false;
-		}
-	}
-	
-	
-	//Retrieve All Games
-	public function getGames()
-	{
-		try
-		{
-			$client = $this->soap;
-			$games = $client->getGames($this->soapEnv);
-			//If any games are found
-			if (isset($games->GetGamesResult->XboxGame))
-			{
-				//Return games (else empty games array will be returned)
-				$this->games = $games->GetGamesResult->XboxGame;
-			}
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-		}
-		return $this->respond();
-	}
-	
-	//Add New Game
-	public function addGame($title)
-	{
-		try
-		{
-			$client = $this->soap;
-			$this->soapEnv['title'] = $title;
-			$client->addGame($this->soapEnv);
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-		}
-		return $this->respond();
-	}
-	
-	//Vote for Game
-	public function addVote($id)
-	{
-		try
-		{
-			$client = $this->soap;
-			$this->soapEnv['id'] = $id;
-			$client->addVote($this->soapEnv);
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-		}
-		return $this->respond();
-	}
-	
-	//Purchase Game
-	public function setGotIt($id)
-	{
-		try
-		{
-			$client = $this->soap;
-			$this->soapEnv['id'] = $id;
-			$client->setGotIt($this->soapEnv);
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-		}
-		return $this->respond();
-	}
-	
-	//Clear Games
-	public function clearGames()
-	{
-		try
-		{
-			$client = $this->soap;
-			$client->clearGames($this->soapEnv);
-		}
-		catch (Exception $e)
-		{
-			$this->error = $e->faultstring;
-		}
-		return $this->respond();
-	}
-}
+//MVC: fake MVC controller parent class; REMOVE during migration
+require_once("fakeMVCController.php");
 
 /*-------------------------*\
 |   gamesController Class   |
@@ -181,7 +14,7 @@ MVC MIGRATION:
 	Belongs in Controllers folder
 
 */
-class gamesController
+class games extends fakeMVCController
 {
 	//Response Properties
 	public $games = array();
@@ -189,13 +22,13 @@ class gamesController
 	public $json = "";
 	
 	//gamesModel
-	protected $soap; 
+	public $soap; 
 	protected $gameProperties = array('Id', 'Title', 'Status', 'Votes');
 	
 	//userController
 	protected $user;
 	
-	//Posteds Data
+	//Posted Data
 	protected $data;
 	
 	//MVC: Make sure to uncomment call to parent constructor when migrating to a real MVC
@@ -204,22 +37,31 @@ class gamesController
 		//MVC: call parent constructor
 		//parent::__construct();
 		
-		//Create instance of gamesModel
+		//MVC: Create instance of gamesModel; Substitute with appropriate method for MVC (e.g. for CodeIgniter: $this->load->model('gamesModel','soap');
+		require_once('gamesModel.php');
 		$this->soap = new gamesModel();
+		
 		if ($this->soap->error)
 		{
 			$this->error = $this->soap->error;
 			$this->respond();
 		}
 		
-		//Create an instance of a userController
-		$this->user = new userController();
+		//MVC: Create an instance of a userController; Substitute with appropriate method for MVC (left as is for CodeIgniter)
+		require_once('user.php');
+		$this->user = new user();
 		
 		//MVC: Set data from $_POST
 		if (isset($_POST))
 		{
 			$this->data = $_POST;
 		}
+	}
+	
+	//MVC: default action
+	public function index()
+	{
+		$this->getAll();
 	}
 	
 	//MVC: Sends JSON Response to View
@@ -534,45 +376,8 @@ class gamesController
 //MVC: Everything below should be removed when migrating to a real MVC framework
 //-------------------------------------------------------------------------------
 
-class fakeMVC extends gamesController
-{
-	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
-	public function simulateFramework()
-	{
-		//Default Action
-		$defaultAction = 'getAll';
-	
-		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : $defaultAction;
-		
-		//VALIDATION: Check to see if requested action exists
-		if (method_exists($this, $action))
-		{
-			//VALIDATION: Allow access to public methods only
-			$refl = new ReflectionMethod($this, $action);
-			if ($refl->isPublic())
-			{
-				//Call requested action
-				$this->$action();
-			}
-			else
-			{
-				//ERROR: Attempted to access non-public function
-				$this->error = "Error: method '".$action."' is not public!";
-				$this->respond();
-			}
-		}
-		else
-		{
-			//ERROR: Function does not exist
-			$this->error = "Error: method '".$action."' does not exist!";
-			$this->respond();
-		}
-	}
-}
-
 //MVC: simulates somc MVC functions inherited from controller; drop this if migrated to a MVC framework
-$games = new fakeMVC();
+$games = new games();
 $games->simulateFramework();
 
 ?>
