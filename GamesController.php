@@ -11,12 +11,9 @@ MVC MIGRATION:
 	- All migration steps are found within the class declaration line or the constructor
 	Migration Steps:
 		1. Change the parent class to a proper Controller parent class (e.g. CI_Controller or AppController)
-		2. Modify the code to properly load the Game model
-				CodeIgniter: replace both lines with $this->load->model('Game');
-				CakePHP: delete both lines, since $this->Game is automatically accessible
-		3. Modiy the code to properly load the Users model
-				CodeIgniter: replace both lines with $this->load->model('User');
-				CakePHP: replace first line with App::uses('User', 'Model'); and leave second line
+		- That's all for CodeIgniter, next two steps are for CakePHP
+		2. Uncomment $uses array
+		3. Delete both lines calling ->load->model();
 */
 class GamesController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
 {
@@ -24,8 +21,8 @@ class GamesController extends fakeMVCController // <- Step 1.) Change to proper 
 	public $response = array();
 	public $json = "";
 	
-	//userController
-	public $User;
+	//MVC: Loads models for CakePHP
+	//public $uses = array("Game", "User"); // <- Step 2.) UNCOMMENT for CakePHP
 	
 	//Constructor - loads Game and User models and sets Game's data to $_POST
 	public function __construct()
@@ -33,13 +30,10 @@ class GamesController extends fakeMVCController // <- Step 1.) Change to proper 
 		//Call parent constructor
 		parent::__construct();
 		
-		//MVC: Create instance of gamesModel
-		require_once('Game.php'); // <- Step 2.)
-		$this->Game = new Game(); // <- ^
-		
-		//MVC: Create an instance of a userController
-		require_once('User.php'); // <- Step 3.)
-		$this->User = new User(); // <- ^
+		//MVC: Load Game and User models
+		$this->load->model('Game'); // <- Step 3.) DELETE for CakePHP
+		$this->load->model('User'); // <- ^
+
 		
 		if ($this->Game->error)
 		{

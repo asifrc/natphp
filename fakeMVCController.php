@@ -7,25 +7,25 @@ DESCRIPTION:
 	Simulates some of the routing functions of an MVC framework
 MVC MIGRATION:
 	Do not include in MVC migration
-	Remove require_once of this file from controllers (found at the very top of the files)
 	Make sure to change the games and user classes to extend the proper MVC Controller class
-		Same goes for Model classes
-	Make sure to remove all code after class declarations in games and user classes
+	^ Same goes for Model classes
 
 */
 class fakeMVCController
 {
-	//MVC: Models; MVC framework will automatically create $this->User and $this->Game
+	//MVC: Models; MVC framework will likely create $this->User and $this->Game
+	public $Game;
 	public $User;
-	public $Game; 
+	public $load;
 	
-	//MVC: Empty Constructor for children to safely calll parent::__construct()
+	//MVC: Constructor for children to safely calll parent::__construct()
 	public function __construct()
 	{
-		//Empty
+		//MVC: makes CodeIgniter style $this->load->model() available to my controllers
+		$this->load = new modelLoader($this);
 	}
 	
-	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
+	//MVC: Simulates some of the Routing functionality of a framework
 	public function simulateFramework()
 	{
 		//Default Action
@@ -60,6 +60,24 @@ class fakeMVCController
 	}
 }
 
+
+//Loads a mode CodeIgniter style
+class modelLoader
+{
+	public $obj;
+	
+	//Receives fakeMVC object so that this class can update $Game and $User
+	public function __construct($obj)
+	{
+		$this->obj = $obj;
+	}
+	//MVC: Loads Models using CodeIgniter Style $this->load->model();
+	public function model($model)
+	{
+		require_once($model.".php");
+		$this->obj->$model = new $model();
+	}
+}
 
 //-------------------------------------------------------------------------------
 //MVC: The procedural code below simulates a framework's inversion of control

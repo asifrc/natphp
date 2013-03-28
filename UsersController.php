@@ -10,9 +10,8 @@ MVC MIGRATION:
 	- All migration steps are found within the class declaration line or the constructor
 	Migration Steps:
 		1. Change the parent class to a proper Controller parent class (e.g. CI_Controller or AppController)
-		2. Modify code to properly instantiate User model
-			CodeIgniter: replace both lines with $this->load->model('User');
-			CakePHP: delete both lines, User model is automatically available (Constructor function becomes unnecessary in this case)
+		- That's all for CodeIgniter, next step is for CakePHP
+		2. Delete whole __construct() function
 
 */
 class UsersController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
@@ -25,14 +24,13 @@ class UsersController extends fakeMVCController // <- Step 1.) Change to proper 
 	public $eligible = false;
 	
 	//Constructor - Load User Model
-	public function __construct()
+	public function __construct() // <- Step 3.) DELETE whole __construct() function for CakePHP
 	{
 		//MVC: call parent constructor
 		parent::__construct();
 		
 		//MVC: Create instance of userModel
-		require_once('User.php'); // <- Step 1.)
-		$this->User = new User(); // <- ^
+		$this->load->model('User');
 	}
 	
 	//MVC: default action
@@ -50,10 +48,16 @@ class UsersController extends fakeMVCController // <- Step 1.) Change to proper 
 		die($this->json);
 	}
 	
-	//Check Eligibility and return to a View via JSON
+	//Check Eligibility and return bool
+	public function checkEligible()
+	{
+		return $this->User->checkEligible();
+	}
+	
+	//Return Eligibility to a View via JSON
 	public function isEligible()
 	{
-		$this->eligible = $this->User->checkEligible();
+		$this->eligible = $this->checkEligible();
 		$this->respond();
 	}
 	
