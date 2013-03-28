@@ -14,7 +14,7 @@ MVC MIGRATION:
 		2. Uncomment call to parent constructor
 
 */
-class Game // <- Step 1.) extend proper Model class
+class Game extends CI_Model// <- Step 1.) extend proper Model class
 {
 	//Soap Service
 	protected $_soapURL = "http://xbox2.sierrabravo.net/xbox2.asmx?wsdl";
@@ -34,7 +34,7 @@ class Game // <- Step 1.) extend proper Model class
 	public function __construct()
 	{
 		//MVC: call parent constructor
-		//parent::__construct(); // <- Step 2.) UNCOMMENT when migrating to an MVC
+		parent::__construct(); // <- Step 2.) UNCOMMENT when migrating to an MVC
 		
 		//Attempt to connect to SOAP Service and create a SoapClient
 		try
