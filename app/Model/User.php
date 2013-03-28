@@ -11,7 +11,7 @@ MVC MIGRATION:
 		1. Extend a proper Model parent class (e.g. CI_Model or AppModel)
 
 */
-class User // <- Step 1.) extend proper Model class
+class User extends AppModel // <- Step 1.) extend proper Model class
 {
 	protected $lastVote;
 	
