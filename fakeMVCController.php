@@ -15,6 +15,16 @@ MVC MIGRATION:
 */
 class fakeMVCController
 {
+	//MVC: Models; MVC framework will automatically create $this->User and $this->Game
+	public $User;
+	public $Game; 
+	
+	//MVC: Empty Constructor for children to safely calll parent::__construct()
+	public function __construct()
+	{
+		//Empty
+	}
+	
 	//MVC: Simulates some of the functionality of a framework, remove if you migrate to an MVC framework
 	public function simulateFramework()
 	{
@@ -22,7 +32,7 @@ class fakeMVCController
 		$defaultAction = 'index';
 	
 		//Set action to posted action or use default action
-		$action = (isset($this->data['action'])) ? $this->data['action'] : $defaultAction;
+		$action = (isset($_POST['action'])) ? $_POST['action'] : $defaultAction;
 		
 		//VALIDATION: Check to see if requested action exists
 		if (method_exists($this, $action))
@@ -49,4 +59,27 @@ class fakeMVCController
 		}
 	}
 }
+
+
+//-------------------------------------------------------------------------------
+//MVC: The procedural code below simulates a framework's inversion of control
+//-------------------------------------------------------------------------------
+
+//Error Reporting
+error_reporting(E_ALL | E_STRICT);
+
+//Include Controller Classes
+require_once("GamesController.php");
+require_once("UsersController.php");
+
+//Call Controller based on $_GET['c'] value
+$controller = "Games";
+if (isset($_GET['c']))
+{
+	$controller = $_GET['c'];
+}
+//Instantiate requested controller and simulate framework
+$class = $controller."Controller";
+$mvc = new $class();
+$mvc->simulateFramework();
 ?>
