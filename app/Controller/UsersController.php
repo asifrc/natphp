@@ -14,7 +14,7 @@ MVC MIGRATION:
 		2. Delete whole __construct() function
 
 */
-class UsersController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
+class UsersController extends AppController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
 {	
 	//Posted Data
 	public $data;
@@ -22,17 +22,7 @@ class UsersController extends fakeMVCController // <- Step 1.) Change to proper 
 	//Response Data
 	public $error = false;
 	public $eligible = false;
-	
-	//Constructor - Load User Model
-	public function __construct() // <- Step 3.) DELETE whole __construct() function for CakePHP
-	{
-		//MVC: call parent constructor
-		parent::__construct();
-		
-		//MVC: Create instance of userModel
-		$this->load->model('User');
-	}
-	
+
 	//MVC: default action
 	public function index()
 	{
