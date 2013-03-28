@@ -3,11 +3,11 @@ var xbox = {
 	//URL Mapping for ajax funtions
 	url: {
 		//Set to True if MVC framework rewrites url into baseurl/method
-		rewrite: false,
+		rewrite: true,
 		//URL for Games controller
-		games: "fakeMVCController.php?c=Games",
+		games: "Games",
 		//URL for User controller
-		user: "fakeMVCController.php?c=Users",
+		user: "Users",
 		
 		//Returns properly mapped url for ajax calls
 		map: function(controller, action) {
