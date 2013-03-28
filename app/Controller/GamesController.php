@@ -15,25 +15,20 @@ MVC MIGRATION:
 		2. Uncomment $uses array
 		3. Delete both lines calling ->load->model();
 */
-class GamesController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
+class GamesController extends AppController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
 {
 	//Response Properties
 	public $response = array();
 	public $json = "";
 	
 	//MVC: Loads models for CakePHP
-	//public $uses = array("Game", "User"); // <- Step 2.) UNCOMMENT for CakePHP
+	public $uses = array("Game", "User"); // <- Step 2.) UNCOMMENT for CakePHP
 	
 	//Constructor - loads Game and User models and sets Game's data to $_POST
 	public function __construct()
 	{
 		//Call parent constructor
 		parent::__construct();
-		
-		//MVC: Load Game and User models
-		$this->load->model('Game'); // <- Step 3.) DELETE for CakePHP
-		$this->load->model('User'); // <- ^
-
 		
 		if ($this->Game->error)
 		{
