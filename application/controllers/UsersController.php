@@ -14,7 +14,7 @@ MVC MIGRATION:
 		2. Delete whole __construct() function
 
 */
-class UsersController extends fakeMVCController // <- Step 1.) Change to proper Controller class when migrating to MVC framework
+class UsersController extends CI_Controller // <- Step 1.) Change to proper Controller class when migrating to MVC framework
 {	
 	//Posted Data
 	public $data;
